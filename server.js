@@ -12,6 +12,7 @@ const db = mysql.createConnection({
   user: process.env.user,
   password: process.env.password,
   database: process.env.database,
+  connectTimeout: 20000,
 });
 
 app.post("/register", async (req, res) => {
