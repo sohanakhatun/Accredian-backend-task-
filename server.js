@@ -12,15 +12,17 @@ const db = mysql.createConnection({
   user: process.env.user,
   password: process.env.password,
   database: process.env.database,
-  connectTimeout: 2147483647,
+  connectTimeout:2147483647,
 });
+
+
 const maxRetryAttempts = 3; // Maximum number of retry attempts
 let retryCount = 0;
 
 function establishConnection() {
-  // const connection = mysql.createConnection(connectionConfig);
+  const connection = mysql.createConnection(db);
 
-  db.connect((err) => {
+  connection.connect((err) => {
     if (err) {
       if (err.code === 'ETIMEDOUT' && retryCount < maxRetryAttempts) {
         // Retry connection after a delay (e.g., 5 seconds)
@@ -38,6 +40,12 @@ function establishConnection() {
 
     // Remember to handle errors and close the connection appropriately
   });
+}
+
+// Start the initial connection attempt
+establishConnection();
+
+// register controller
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -77,6 +85,7 @@ app.post("/register", async (req, res) => {
   });
 });
 
+// login controller
 app.post("/login", (req, res) => {
   const sql = "SELECT * FROM login WHERE email = ?";
   db.query(sql, [req.body.email], (err, data) => {
@@ -106,22 +115,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// app.post('/login', (req, res) => {
-//   const { email, password } = req.body;
 
-//   const sql = 'SELECT * FROM users WHERE email = ? AND password = ?';
-//   db.query(sql, [email, password], (err, results) => {
-//     if (err) {
-//       res.status(500).json({ message: 'Error logging in' });
-//       return;
-//     }
-//     if (results.length > 0) {
-//       res.status(200).json({ message: 'Login successful' });
-//     } else {
-//       res.status(401).json({ message: 'Invalid credentials' });
-//     }
-//   });
-// });
 
 app.listen(3306, () => {
   console.log("server is running");
