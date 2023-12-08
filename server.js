@@ -99,6 +99,6 @@ app.post("/login", (req, res) => {
 //   });
 // });
 
-app.listen(5000, () => {
+app.listen(3306, () => {
   console.log("server is running");
 });
