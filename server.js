@@ -13,6 +13,9 @@ const db = mysql.createConnection({
   password: process.env.password,
   database: process.env.database,
   connectTimeout:10000,
+   waitForConnections: true,
+  connectionLimit: 10, // Adjust this value based on your requirements
+  queueLimit: 0
 });
 
 
@@ -44,7 +47,31 @@ function establishConnection() {
 
 // Start the initial connection attempt
 establishConnection();
+let connection;
 
+function handleDisconnect() {
+  connection = mysql.createConnection(db); // Recreate the connection
+
+  connection.connect((err) => {
+    if (err) {
+      console.error('Error connecting to MySQL:', err);
+      setTimeout(handleDisconnect, 2000); // Attempt to reconnect after 2 seconds
+    } else {
+      console.log('Connected to MySQL!');
+    }
+  });
+
+  connection.on('error', (err) => {
+    console.error('MySQL connection error:', err);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+      handleDisconnect(); // Reconnect if the connection is lost
+    } else {
+      throw err;
+    }
+  });
+}
+
+handleDisconnect();
 // register controller
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
