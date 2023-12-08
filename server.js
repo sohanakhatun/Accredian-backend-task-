@@ -12,9 +12,32 @@ const db = mysql.createConnection({
   user: process.env.user,
   password: process.env.password,
   database: process.env.database,
-  connectTimeout: 0,
+  connectTimeout: 2147483647,
 });
+const maxRetryAttempts = 3; // Maximum number of retry attempts
+let retryCount = 0;
 
+function establishConnection() {
+  // const connection = mysql.createConnection(connectionConfig);
+
+  db.connect((err) => {
+    if (err) {
+      if (err.code === 'ETIMEDOUT' && retryCount < maxRetryAttempts) {
+        // Retry connection after a delay (e.g., 5 seconds)
+        console.error('Connection timeout. Retrying...');
+        retryCount++;
+        setTimeout(establishConnection, 5000); // Retry after 5 seconds
+      } else {
+        console.error('Error connecting to MySQL:', err);
+        // Handle the error or take necessary actions
+      }
+      return;
+    }
+    console.log('Connected to MySQL!');
+    // Perform your queries or other operations here
+
+    // Remember to handle errors and close the connection appropriately
+  });
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
