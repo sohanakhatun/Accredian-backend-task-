@@ -12,67 +12,8 @@ const db = mysql.createConnection({
   user: process.env.user,
   password: process.env.password,
   database: process.env.database,
-  connectTimeout:10000,
-   waitForConnections: true,
-  connectionLimit: 10, // Adjust this value based on your requirements
-  queueLimit: 0
 });
 
-
-const maxRetryAttempts = 3; // Maximum number of retry attempts
-let retryCount = 0;
-
-function establishConnection() {
-  const connection = mysql.createConnection(db);
-
-  connection.connect((err) => {
-    if (err) {
-      if (err.code === 'ETIMEDOUT' && retryCount < maxRetryAttempts) {
-        // Retry connection after a delay (e.g., 5 seconds)
-        console.error('Connection timeout. Retrying...');
-        retryCount++;
-        setTimeout(establishConnection, 5000); // Retry after 5 seconds
-      } else {
-        console.error('Error connecting to MySQL:', err);
-        // Handle the error or take necessary actions
-      }
-      return;
-    }
-    console.log('Connected to MySQL!');
-    // Perform your queries or other operations here
-
-    // Remember to handle errors and close the connection appropriately
-  });
-}
-
-// Start the initial connection attempt
-establishConnection();
-let connection;
-
-function handleDisconnect() {
-  connection = mysql.createConnection(db); // Recreate the connection
-
-  connection.connect((err) => {
-    if (err) {
-      console.error('Error connecting to MySQL:', err);
-      setTimeout(handleDisconnect, 2000); // Attempt to reconnect after 2 seconds
-    } else {
-      console.log('Connected to MySQL!');
-    }
-  });
-
-  connection.on('error', (err) => {
-    console.error('MySQL connection error:', err);
-    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-      handleDisconnect(); // Reconnect if the connection is lost
-    } else {
-      throw err;
-    }
-  });
-}
-
-handleDisconnect();
-// register controller
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -112,7 +53,6 @@ app.post("/register", async (req, res) => {
   });
 });
 
-// login controller
 app.post("/login", (req, res) => {
   const sql = "SELECT * FROM login WHERE email = ?";
   db.query(sql, [req.body.email], (err, data) => {
@@ -142,8 +82,6 @@ app.post("/login", (req, res) => {
   });
 });
 
-
-
-app.listen(3306, () => {
+app.listen(5000, () => {
   console.log("server is running");
 });
